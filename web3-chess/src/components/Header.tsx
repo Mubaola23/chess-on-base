@@ -20,7 +20,7 @@ const Header = () => {
         <div className="hidden md:flex flex-1 justify-end gap-8">
           <div className="flex items-center gap-9">
             <Link href="#" className="text-gray-300 hover:text-white text-sm font-medium leading-normal transition-colors">Play Game</Link>
-            <Link href="#" className="text-white text-sm font-bold leading-normal relative">Leaderboard<span className="absolute -bottom-1 left-0 w-full h-0.5 bg-primary"></span></Link>
+            <Link href="../app/leaderboard/page.tsx" className="text-white text-sm font-bold leading-normal relative">Leaderboard<span className="absolute -bottom-1 left-0 w-full h-0.5 bg-primary"></span></Link>
             <Link href="#" className="text-gray-300 hover:text-white text-sm font-medium leading-normal transition-colors">Profile</Link>
           </div>
           <button className="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-primary text-white text-sm font-bold leading-normal tracking-[0.015em] hover:bg-primary/90 transition-colors">
