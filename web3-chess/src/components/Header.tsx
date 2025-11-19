@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useWeb3 } from '@/lib/hooks/useWeb3';
 
 const Header = () => {
-  const { connectWallet, disconnectWallet, active, account } = useWeb3();
+  const { connectWallet, disconnectWallet, isActive, account } = useWeb3();
 
   const truncateAddress = (address: string) => {
     return `${address.slice(0, 6)}...${address.slice(-4)}`;
@@ -34,10 +34,10 @@ const Header = () => {
             <Link href="/profile/new" className="text-gray-300 hover:text-white text-sm font-medium leading-normal transition-colors">Profile</Link>
           </div>
           <button
-            onClick={active ? disconnectWallet : connectWallet}
+            onClick={isActive ? disconnectWallet : connectWallet}
             className="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-primary text-white text-sm font-bold leading-normal tracking-[0.015em] hover:bg-primary/90 transition-colors"
           >
-            <span className="truncate">{active && account ? truncateAddress(account) : 'Connect Wallet'}</span>
+            <span className="truncate">{account &&isActive? truncateAddress(account) : 'Connect Wallet'}</span>
           </button>
         </div>
         <button className="md:hidden text-white">

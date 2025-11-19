@@ -1,9 +1,11 @@
 
+
+
 import { useWeb3React } from '@web3-react/core';
 import { metaMask } from '@/lib/connectors';
 
 export const useWeb3 = () => {
-  const { connector, account, active, chainId } = useWeb3React();
+  const { connector, account, isActive, chainId } = useWeb3React();
 
   const connectWallet = async () => {
     try {
@@ -23,5 +25,5 @@ export const useWeb3 = () => {
     }
   };
 
-  return { connectWallet, disconnectWallet, active, chainId, account };
+  return { connectWallet, disconnectWallet, isActive, chainId, account };
 };
