@@ -1,11 +1,36 @@
 "use client";
 
 import { useState } from 'react';
+import { useWeb3 } from '@/lib/hooks/useWeb3';
+import { useRouter } from 'next/navigation';
 
 const CreateGamePage = () => {
   const [opponentType, setOpponentType] = useState('friend');
   const [gameType, setGameType] = useState('rated');
   const [timeControl, setTimeControl] = useState('10 min + 5 sec');
+  const [opponentAddress, setOpponentAddress] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const { createGame } = useWeb3();
+  const router = useRouter();
+
+  const handleCreateGame = async () => {
+    if (!opponentAddress) {
+      alert('Please enter an opponent address');
+      return;
+    }
+    setIsLoading(true);
+    try {
+      const receipt = await createGame(opponentAddress);
+      if (receipt) {
+        const gameId = receipt.logs[0].args[0].toString();
+        router.push(`/game/${gameId}`);
+      }
+    } catch (error) {
+      console.error('Failed to create game:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className="flex flex-1 justify-center py-5 px-4 sm:px-10 md:px-20">
@@ -47,6 +72,8 @@ const CreateGamePage = () => {
                       className="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-white focus:outline-0 focus:ring-0 border border-white/20 bg-background-dark focus:border-primary h-14 placeholder:text-gray-500 p-[15px] rounded-r-none border-r-0 text-base font-normal leading-normal"
                       placeholder="Enter ENS or 0x address..."
                       disabled={opponentType === 'random'}
+                      value={opponentAddress}
+                      onChange={(e) => setOpponentAddress(e.target.value)}
                     />
                     <button className="text-gray-400 hover:text-white flex border border-white/20 bg-background-dark items-center justify-center px-[15px] rounded-r-lg border-l-0">
                       <span className="material-symbols-outlined">content_copy</span>
@@ -154,8 +181,19 @@ const CreateGamePage = () => {
                 </div>
               </div>
               <div className="pt-6 border-t border-white/10 flex flex-col gap-4">
-                <button className="flex w-full cursor-pointer items-center justify-center overflow-hidden rounded-lg h-12 px-6 bg-primary text-white text-base font-bold leading-normal tracking-[0.015em] hover:bg-blue-600 transition-colors">
-                  <span className="truncate">Create Game &amp; Sign</span>
+                <button
+                  className="flex w-full cursor-pointer items-center justify-center overflow-hidden rounded-lg h-12 px-6 bg-primary text-white text-base font-bold leading-normal tracking-[0.015em] hover:bg-blue-600 transition-colors disabled:opacity-50"
+                  onClick={handleCreateGame}
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                  ) : (
+                    <span className="truncate">Create Game &amp; Sign</span>
+                  )}
                 </button>
                 <button className="flex w-full cursor-pointer items-center justify-center overflow-hidden rounded-lg h-12 px-6 bg-transparent text-gray-400 text-base font-bold leading-normal tracking-[0.015em] hover:bg-white/5 hover:text-white transition-colors">
                   <span className="truncate">Cancel</span>
