@@ -34,7 +34,7 @@ export const useWeb3 = () => {
       const signer = await provider.getSigner();
       const contract = new ethers.Contract(contractAddress, contractABI, signer);
       const tx = await contract.createGame(opponentAddress);
-      const receipt = await tx.wait();
+      const receipt = await provider.waitForTransaction(tx.hash, 1);
       return receipt;
     } catch (error) {
       console.error('Failed to create game:', error);
