@@ -38,6 +38,7 @@ export const useWeb3 = () => {
       return receipt;
     } catch (error) {
       console.error('Failed to create game:', error);
+      throw error;
     }
   };
 

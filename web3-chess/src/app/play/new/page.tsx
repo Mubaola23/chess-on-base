@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import { useWeb3 } from '@/lib/hooks/useWeb3';
 import { useRouter } from 'next/navigation';
+import { ethers, isAddress } from 'ethers';
+import { contractABI } from '@/lib/contract';
 
 const CreateGamePage = () => {
   const [opponentType, setOpponentType] = useState('friend');
@@ -14,16 +16,29 @@ const CreateGamePage = () => {
   const router = useRouter();
 
   const handleCreateGame = async () => {
-    if (!opponentAddress) {
-      alert('Please enter an opponent address');
+    if (!opponentAddress || !isAddress(opponentAddress)) {
+      alert('Please enter a valid opponent address');
       return;
     }
     setIsLoading(true);
     try {
       const receipt = await createGame(opponentAddress);
       if (receipt) {
-        const gameId = receipt.logs[0].args[0].toString();
-        router.push(`/game/${gameId}`);
+        const iface = new ethers.Interface(contractABI);
+        const parsedLogs = receipt.logs.map((log: any) => {
+          try {
+            return iface.parseLog(log);
+          } catch (e) {
+            return null;
+          }
+        });
+        const gameCreatedLog = parsedLogs.find((log: any) => log?.name === 'GameCreated');
+        if (gameCreatedLog) {
+          const gameId = gameCreatedLog.args[0].toString();
+          router.push(`/game/${gameId}`);
+        } else {
+          console.error('GameCreated event not found in transaction receipt');
+        }
       }
     } catch (error) {
       console.error('Failed to create game:', error);
