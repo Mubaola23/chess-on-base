@@ -5,7 +5,8 @@ import { contractAddress, contractABI } from '@/lib/contract';
 import { BASE_SEPOLIA_CHAIN_ID } from '@/lib/chains';
 
 export const useWeb3 = () => {
-  const { connector, account, isActive, chainId, provider } = useWeb3React();
+  const { connector, account, isActive, chainId, provider: eip1193Provider } = useWeb3React();
+  const provider = eip1193Provider ? new ethers.BrowserProvider(eip1193Provider.provider) : undefined;
 
   const connectWallet = async () => {
     try {
@@ -47,7 +48,6 @@ export const useWeb3 = () => {
       const signer = await provider.getSigner();
       const contract = new ethers.Contract(contractAddress, contractABI, signer);
       const tx = await contract.createGame(opponentAddress);
-      console.log("tx hash:", tx.hash);
       const receipt = await provider.waitForTransaction(tx.hash, 1);
       return receipt;
     } catch (error) {
