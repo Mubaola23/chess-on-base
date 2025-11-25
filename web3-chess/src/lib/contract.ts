@@ -1,36 +1,5 @@
 export const contractAddress = '0xf8e81D47203A594245E36C48e151709F0C19fBe8';
-export const contractABI = [
-	{
-		"inputs": [
-			{
-				"internalType": "address",
-				"name": "_player2",
-				"type": "address"
-			}
-		],
-		"name": "createGame",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "_gameId",
-				"type": "uint256"
-			},
-			{
-				"internalType": "address",
-				"name": "_winner",
-				"type": "address"
-			}
-		],
-		"name": "endGame",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
+export const contractABI =[
 	{
 		"anonymous": false,
 		"inputs": [
@@ -76,24 +45,6 @@ export const contractABI = [
 		"type": "event"
 	},
 	{
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "_gameId",
-				"type": "uint256"
-			},
-			{
-				"internalType": "string",
-				"name": "_pgn",
-				"type": "string"
-			}
-		],
-		"name": "makeMove",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
 		"anonymous": false,
 		"inputs": [
 			{
@@ -117,6 +68,37 @@ export const contractABI = [
 		],
 		"name": "MoveMade",
 		"type": "event"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "_player2",
+				"type": "address"
+			}
+		],
+		"name": "createGame",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "_gameId",
+				"type": "uint256"
+			},
+			{
+				"internalType": "address",
+				"name": "_winner",
+				"type": "address"
+			}
+		],
+		"name": "endGame",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
 	},
 	{
 		"inputs": [
@@ -204,6 +186,24 @@ export const contractABI = [
 			}
 		],
 		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "_gameId",
+				"type": "uint256"
+			},
+			{
+				"internalType": "string",
+				"name": "_pgn",
+				"type": "string"
+			}
+		],
+		"name": "makeMove",
+		"outputs": [],
+		"stateMutability": "nonpayable",
 		"type": "function"
 	},
 	{
