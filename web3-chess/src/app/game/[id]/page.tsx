@@ -13,22 +13,40 @@ const GamePage = ({ params }: { params: { id: string } }) => {
   const [playerOneAddress, setPlayerOneAddress] = useState('');
   const [playerTwoAddress, setPlayerTwoAddress] = useState('');
   const [currentPlayer, setCurrentPlayer] = useState('');
+  const [error, setError] = useState('');
 
   useEffect(() => {
     if (contract) {
       const fetchGame = async () => {
-        const gameData = await contract.getGame(params.id);
-        const [player1, player2, currentTurn, moves] = gameData;
-        setPlayerOneAddress(player1);
-        setPlayerTwoAddress(player2);
-        setCurrentPlayer(currentTurn);
+        try {
+          const gameId = parseInt(params.id, 10);
+          if (isNaN(gameId)) {
+            setError('Invalid game ID.');
+            return;
+          }
 
-        const newGame = new Chess();
-        moves.forEach((move: string) => {
-          newGame.move(move);
-        });
-        setGame(newGame);
-        setFen(newGame.fen());
+          const gamesCount = await contract.getGamesCount();
+          if (gameId >= gamesCount) {
+            setError('Game not found.');
+            return;
+          }
+
+          const gameData = await contract.getGame(params.id);
+          const [player1, player2, currentTurn, moves] = gameData;
+          setPlayerOneAddress(player1);
+          setPlayerTwoAddress(player2);
+          setCurrentPlayer(currentTurn);
+
+          const newGame = new Chess();
+          moves.forEach((move: string) => {
+            newGame.move(move);
+          });
+          setGame(newGame);
+          setFen(newGame.fen());
+        } catch (e) {
+          console.error('Failed to fetch game:', e);
+          setError('Failed to load game data.');
+        }
       };
 
       fetchGame();
@@ -102,6 +120,14 @@ const GamePage = ({ params }: { params: { id: string } }) => {
     }
     return null;
   }).filter(item => item !== null);
+
+  if (error) {
+    return (
+      <main className="flex flex-1 flex-col items-center justify-center p-4">
+        <h1 className="text-2xl font-bold text-red-500">{error}</h1>
+      </main>
+    );
+  }
 
   return (
     <main className="flex flex-1 flex-col lg:flex-row gap-8 p-4 sm:p-6 lg:p-8">
