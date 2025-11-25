@@ -1,4 +1,4 @@
-import { useWeb3React } from '@web3-react/core';
+import { useWeb3React } from '@web-react/core';
 import { metaMask } from '@/lib/connectors';
 import { ethers } from 'ethers';
 import { contractAddress, contractABI } from '@/lib/contract';
@@ -55,7 +55,13 @@ export const useWeb3 = () => {
     }
 
     try {
-      const tx = await contract.createGame(opponentAddress);
+      // Estimate gas before sending the transaction
+      const estimatedGas = await contract.createGame.estimateGas(opponentAddress);
+      console.log('Estimated gas:', estimatedGas.toString());
+
+      const tx = await contract.createGame(opponentAddress, {
+        gasLimit: estimatedGas,
+      });
       const receipt = await tx.wait();
       return receipt;
     } catch (error) {
