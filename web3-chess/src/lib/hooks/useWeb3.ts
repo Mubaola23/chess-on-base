@@ -1,4 +1,4 @@
-import { useWeb3React } from '@web-react/core';
+import { useWeb3React } from '@web3-react/core';
 import { metaMask } from '@/lib/connectors';
 import { ethers } from 'ethers';
 import { contractAddress, contractABI } from '@/lib/contract';
