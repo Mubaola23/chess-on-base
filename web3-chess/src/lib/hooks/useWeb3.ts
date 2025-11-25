@@ -47,6 +47,7 @@ export const useWeb3 = () => {
       const signer = await provider.getSigner();
       const contract = new ethers.Contract(contractAddress, contractABI, signer);
       const tx = await contract.createGame(opponentAddress);
+      console.log("tx hash:", tx.hash);
       const receipt = await provider.waitForTransaction(tx.hash, 1);
       return receipt;
     } catch (error) {

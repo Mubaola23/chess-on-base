@@ -24,6 +24,8 @@ const CreateGamePage = () => {
     try {
       const receipt = await createGame(opponentAddress);
       if (receipt) {
+                console.log('Raw Receipt:', JSON.stringify(receipt, null, 2));
+
         const iface = new ethers.Interface(contractABI);
         const parsedLogs = receipt.logs.map((log: any) => {
           try {
