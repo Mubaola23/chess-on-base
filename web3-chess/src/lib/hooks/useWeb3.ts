@@ -6,8 +6,8 @@ import { BASE_SEPOLIA_CHAIN_ID } from '@/lib/chains';
 import { useState, useEffect } from 'react';
 
 export const useWeb3 = () => {
-  const { connector, account, isActive, chainId, provider: eip1193Provider } = useWeb3React();
-  const provider = eip1193Provider ? new ethers.BrowserProvider(eip1193Provider) : undefined;
+  const { connector, account, isActive, chainId } = useWeb3React();
+  const provider = connector?.provider ? new ethers.BrowserProvider(connector.provider) : undefined;
   const [contract, setContract] = useState<ethers.Contract | null>(null);
 
   useEffect(() => {
