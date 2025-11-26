@@ -9,14 +9,14 @@ import { ethers } from 'ethers';
 const GamePage = ({ params }: { params: { id: string } }) => {
   const [game, setGame] = useState(new Chess());
   const [fen, setFen] = useState(game.fen());
-  const { contract } = useWeb3();
+  const { contract, readOnlyContract } = useWeb3();
   const [playerOneAddress, setPlayerOneAddress] = useState('');
   const [playerTwoAddress, setPlayerTwoAddress] = useState('');
   const [currentPlayer, setCurrentPlayer] = useState('');
   const [error, setError] = useState('');
 
   useEffect(() => {
-    if (contract) {
+    if (readOnlyContract) {
       const fetchGame = async () => {
         try {
           const gameId = parseInt(params.id, 10);
@@ -25,13 +25,13 @@ const GamePage = ({ params }: { params: { id: string } }) => {
             return;
           }
 
-          const gamesCount = await contract.getGamesCount();
+          const gamesCount = await readOnlyContract.getGamesCount();
           if (gameId >= gamesCount) {
             setError('Game not found.');
             return;
           }
 
-          const gameData = await contract.getGame(params.id);
+          const gameData = await readOnlyContract.getGame(params.id);
           const [player1, player2, currentTurn, moves] = gameData;
           setPlayerOneAddress(player1);
           setPlayerTwoAddress(player2);
@@ -51,7 +51,7 @@ const GamePage = ({ params }: { params: { id: string } }) => {
 
       fetchGame();
     }
-  }, [contract, params.id]);
+  }, [readOnlyContract, params.id]);
 
   async function onDrop({ sourceSquare, targetSquare }: { sourceSquare: string, targetSquare: string }) {
     if (!contract) return false;

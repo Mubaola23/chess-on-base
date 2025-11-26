@@ -2,13 +2,16 @@ import { useWeb3React } from '@web3-react/core';
 import { metaMask } from '@/lib/connectors';
 import { ethers } from 'ethers';
 import { contractAddress, contractABI } from '@/lib/contract';
-import { BASE_SEPOLIA_CHAIN_ID } from '@/lib/chains';
-import { useState, useEffect } from 'react';
+import { BASE_SEPOLIA_CHAIN_ID, BASE_SEPOLIA_RPC_URL } from '@/lib/chains';
+import { useState, useEffect, useMemo } from 'react';
 
 export const useWeb3 = () => {
   const { connector, account, isActive, chainId } = useWeb3React();
   const provider = connector?.provider ? new ethers.BrowserProvider(connector.provider) : undefined;
   const [contract, setContract] = useState<ethers.Contract | null>(null);
+
+  const readOnlyProvider = useMemo(() => new ethers.JsonRpcProvider(BASE_SEPOLIA_RPC_URL), []);
+  const readOnlyContract = useMemo(() => new ethers.Contract(contractAddress, contractABI, readOnlyProvider), [readOnlyProvider]);
 
   useEffect(() => {
     const setupContract = async () => {
@@ -70,5 +73,5 @@ export const useWeb3 = () => {
     }
   };
 
-  return { connectWallet, disconnectWallet, isActive, chainId, account, createGame, contract };
+  return { connectWallet, disconnectWallet, isActive, chainId, account, createGame, contract, readOnlyContract };
 };
