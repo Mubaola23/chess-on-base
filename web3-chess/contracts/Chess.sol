@@ -21,6 +21,7 @@ contract Chess {
     event GameEnded(uint256 gameId, address winner);
 
     function createGame(address _player2) public {
+        require(_player2 != address(0), "Cannot create a game with the zero address");
         require(_player2 != msg.sender, "Cannot create a game with yourself");
         games.push(Game({
             player1: msg.sender,
