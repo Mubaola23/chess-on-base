@@ -58,13 +58,7 @@ export const useWeb3 = () => {
     }
 
     try {
-      // Estimate gas before sending the transaction
-      const estimatedGas = await contract.createGame.estimateGas(opponentAddress);
-      console.log('Estimated gas:', estimatedGas.toString());
-
-      const tx = await contract.createGame(opponentAddress, {
-        gasLimit: estimatedGas,
-      });
+      const tx = await contract.createGame(opponentAddress);
       const receipt = await tx.wait();
       return receipt;
     } catch (error) {
