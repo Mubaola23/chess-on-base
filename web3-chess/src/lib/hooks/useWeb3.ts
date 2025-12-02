@@ -61,8 +61,9 @@ export const useWeb3 = () => {
       const tx = await contract.createGame(opponentAddress);
       const receipt = await tx.wait();
       return receipt;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to create game:', error);
+      console.error('Full error object:', JSON.stringify(error, null, 2));
       throw error;
     }
   };
