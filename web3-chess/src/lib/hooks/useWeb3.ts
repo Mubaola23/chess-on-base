@@ -74,13 +74,12 @@ export const useWeb3 = () => {
 
     if (chainId !== BASE_SEPOLIA_CHAIN_ID) {
       await switchOrAddNetwork();
-      // At this point, the user should be on the correct network.
-      // We might need to wait for the chainId to update in the state.
-      // For now, we'll proceed, and if it fails, the user can try again.
     }
 
     try {
-      const tx = await contract.createGame(opponentAddress);
+      const tx = await contract.createGame(opponentAddress, {
+        gasLimit: 300000,
+      });
       const receipt = await tx.wait();
       return receipt;
     } catch (error: any) {
