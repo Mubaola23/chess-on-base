@@ -11,6 +11,29 @@ export const metadata: Metadata = {
   description: "A decentralized chess game on the Base network.",
 };
 
+export async function generateMetadata(): Promise<Metadata> {
+    return {
+        title: "Web3 Chess",
+  description: "A decentralized chess game on the Base network.",
+        other: {
+        'fc:miniapp': JSON.stringify({
+            version: 'next',
+            imageUrl: 'https://github.com/base/brand-kit/blob/main/logo/TheSquare/Digital/Base_square_blue.png',
+            button: {
+                title: `Launch Your Chess on Base Mini App`,
+                action: {
+                    type: 'launch_miniapp',
+                    name: 'Chess on Base',
+                    url: 'https://chess-on-base-x7l8.vercel.app/',
+                    splashImageUrl: 'https://github.com/base/brand-kit/blob/main/logo/TheSquare/Digital/Base_square_blue.png',
+                    splashBackgroundColor: '#000000',
+                },
+            },
+        }),
+        },
+    };
+    }
+    
 export default function RootLayout({
   children,
 }: Readonly<{
