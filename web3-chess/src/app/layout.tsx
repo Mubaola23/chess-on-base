@@ -6,10 +6,7 @@ import { Providers } from "./providers";
 
 const spaceGrotesk = Space_Grotesk({ subsets: ["latin"] });
 
-export const metadata: Metadata = {
-  title: "Web3 Chess",
-  description: "A decentralized chess game on the Base network.",
-};
+
 
 export async function generateMetadata(): Promise<Metadata> {
     return {
