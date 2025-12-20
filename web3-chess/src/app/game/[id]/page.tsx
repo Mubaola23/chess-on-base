@@ -53,35 +53,44 @@ const GamePage = ({ params }: { params: { id: string } }) => {
     }
   }, [readOnlyContract, params.id]);
 
-  async function onDrop({ sourceSquare, targetSquare }: { sourceSquare: string, targetSquare: string }) {
+  function onDrop({ sourceSquare, targetSquare }: { sourceSquare: string, targetSquare: string }): boolean {
     if (!contract) return false;
 
-    const move = game.move({
+    const gameCopy = new Chess(game.fen());
+    const move = gameCopy.move({
       from: sourceSquare,
       to: targetSquare,
       promotion: 'q',
     });
 
-    if (move === null) return false;
-
-    try {
-      const tx = await contract.makeMove(params.id, move.san);
-      await tx.wait();
-      setFen(game.fen());
-    } catch (error) {
-      console.error("Failed to make move:", error);
-      // Revert the move on the local board if the transaction fails
-      const newGame = new Chess(fen);
-      setGame(newGame);
-      return false;
+    if (move === null) {
+      return false; // Illegal move
     }
 
-    return true;
+    // Optimistically update the board
+    setFen(gameCopy.fen());
+
+    // Asynchronously send the transaction
+    (async () => {
+      try {
+        const tx = await contract.makeMove(params.id, move.san);
+        await tx.wait();
+        // If the transaction is successful, update the definitive game state
+        setGame(gameCopy);
+      } catch (error) {
+        console.error("Failed to make move:", error);
+        // If the transaction fails, revert the optimistic UI update
+        setFen(game.fen()); // Revert to the fen from the last confirmed state
+        setError("Failed to sync move with the blockchain. Reverting.");
+      }
+    })();
+
+    return true; // The move was locally valid
   }
 
   useEffect(() => {
     if (contract) {
-      const onMoveMade = (gameId: ethers.BigNumber, player: string, move: string) => {
+      const onMoveMade = (gameId: ethers.BigNumberish, player: string, move: string) => {
         if (gameId.toString() === params.id) {
           game.move(move);
           setFen(game.fen());
@@ -167,16 +176,19 @@ const GamePage = ({ params }: { params: { id: string } }) => {
         {/* Chessboard */}
         <div className="flex w-full grow aspect-square bg-white/5 rounded-xl p-2">
           <Chessboard
-            {...{
-              boardWidth: 560,
+            options={{
               position: fen,
               onPieceDrop: onDrop,
-              customBoardStyle: {
+              boardStyle: {
                 borderRadius: '4px',
                 boxShadow: '0 2px 10px rgba(0, 0, 0, 0.5)',
               },
-              customDarkSquareStyle: { backgroundColor: '#4A4A4A' },
-              customLightSquareStyle: { backgroundColor: '#EAEAEA' },
+              darkSquareStyle: {
+                backgroundColor: '#4A4A4A',
+              },
+              lightSquareStyle: {
+                backgroundColor: '#EAEAEA',
+              },
             }}
           />
         </div>
