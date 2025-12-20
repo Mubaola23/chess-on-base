@@ -2,11 +2,27 @@ import { useWeb3React } from '@web3-react/core';
 import { metaMask } from '@/lib/connectors';
 import { ethers } from 'ethers';
 import { contractAddress, contractABI } from '@/lib/contract';
-import { BASE_SEPOLIA_CHAIN_ID } from '@/lib/chains';
+import { BASE_SEPOLIA_CHAIN_ID, BASE_SEPOLIA_RPC_URL, BASE_SEPOLIA } from '@/lib/chains';
+import { useState, useEffect, useMemo } from 'react';
 
 export const useWeb3 = () => {
-  const { connector, account, isActive, chainId, provider: eip1193Provider } = useWeb3React();
-  const provider = eip1193Provider ? new ethers.BrowserProvider(eip1193Provider.provider) : undefined;
+  const { connector, account, isActive, chainId } = useWeb3React();
+  const provider = connector?.provider ? new ethers.BrowserProvider(connector.provider) : undefined;
+  const [contract, setContract] = useState<ethers.Contract | null>(null);
+
+  const readOnlyProvider = useMemo(() => new ethers.JsonRpcProvider(BASE_SEPOLIA_RPC_URL), []);
+  const readOnlyContract = useMemo(() => new ethers.Contract(contractAddress, contractABI, readOnlyProvider), [readOnlyProvider]);
+
+  useEffect(() => {
+    const setupContract = async () => {
+      if (provider && account) {
+        const signer = await provider.getSigner();
+        const contractInstance = new ethers.Contract(contractAddress, contractABI, signer);
+        setContract(contractInstance);
+      }
+    };
+    setupContract();
+  }, [provider, account]);
 
   const connectWallet = async () => {
     try {
@@ -26,35 +42,52 @@ export const useWeb3 = () => {
     }
   };
 
+  const switchOrAddNetwork = async () => {
+    if (!provider) return;
+    try {
+      await provider.send('wallet_switchEthereumChain', [{ chainId: `0x${BASE_SEPOLIA_CHAIN_ID.toString(16)}` }]);
+    } catch (switchError: any) {
+      if (switchError.code === 4902) {
+        try {
+          await provider.send('wallet_addEthereumChain', [
+            {
+              chainId: `0x${BASE_SEPOLIA.chainId.toString(16)}`,
+              chainName: BASE_SEPOLIA.chainName,
+              nativeCurrency: BASE_SEPOLIA.nativeCurrency,
+              rpcUrls: BASE_SEPOLIA.rpcUrls,
+              blockExplorerUrls: BASE_SEPOLIA.blockExplorerUrls,
+            },
+          ]);
+        } catch (addError) {
+          console.error('Failed to add network:', addError);
+        }
+      }
+      console.error('Failed to switch network:', switchError);
+    }
+  };
+
   const createGame = async (opponentAddress: string) => {
-    if (!provider || !account) {
-      console.error('Wallet not connected');
+    if (!contract) {
+      console.error('Contract not initialized');
       return;
     }
 
     if (chainId !== BASE_SEPOLIA_CHAIN_ID) {
-      try {
-        await metaMask.activate(BASE_SEPOLIA_CHAIN_ID);
-        // After switching, the provider and signer need to be re-established.
-        // A page reload or a more complex state management would be needed here.
-        // For now, we'll just proceed, assuming the user is now on the correct network.
-      } catch (error) {
-        console.error('Failed to switch network:', error);
-        return;
-      }
+      await switchOrAddNetwork();
     }
 
     try {
-      const signer = await provider.getSigner();
-      const contract = new ethers.Contract(contractAddress, contractABI, signer);
-      const tx = await contract.createGame(opponentAddress);
-      const receipt = await provider.waitForTransaction(tx.hash, 1);
+      const tx = await contract.createGame(opponentAddress, {
+        gasLimit: 300000,
+      });
+      const receipt = await tx.wait();
       return receipt;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to create game:', error);
+      console.error('Full error object:', JSON.stringify(error, null, 2));
       throw error;
     }
   };
 
-  return { connectWallet, disconnectWallet, isActive, chainId, account, createGame };
+  return { connectWallet, disconnectWallet, isActive, chainId, account, createGame, contract, readOnlyContract };
 };

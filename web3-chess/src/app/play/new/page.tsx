@@ -12,6 +12,7 @@ const CreateGamePage = () => {
   const [timeControl, setTimeControl] = useState('10 min + 5 sec');
   const [opponentAddress, setOpponentAddress] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
   const { createGame } = useWeb3();
   const router = useRouter();
 
@@ -21,6 +22,7 @@ const CreateGamePage = () => {
       return;
     }
     setIsLoading(true);
+    setError('');
     try {
       const receipt = await createGame(opponentAddress);
       if (receipt) {        console.log("receipt:",receipt);
@@ -40,10 +42,16 @@ const CreateGamePage = () => {
           router.push(`/game/${gameId}`);
         } else {
           console.error('GameCreated event not found in transaction receipt');
+          setError('Failed to create game. Please try again.');
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to create game:', error);
+      if (error.message.includes('Failed to fetch')) {
+        setError('Network connection failed. Please check your connection and try again.');
+      } else {
+        setError('An unexpected error occurred. Please try again.');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -197,6 +205,11 @@ const CreateGamePage = () => {
                   <span className="text-white font-medium">~0.0001 ETH</span>
                 </div>
               </div>
+              {error && (
+                <div className="py-4 text-red-500 text-sm text-center">
+                  {error}
+                </div>
+              )}
               <div className="pt-6 border-t border-white/10 flex flex-col gap-4">
                 <button
                   className="flex w-full cursor-pointer items-center justify-center overflow-hidden rounded-lg h-12 px-6 bg-primary text-white text-base font-bold leading-normal tracking-[0.015em] hover:bg-blue-600 transition-colors disabled:opacity-50"

@@ -37,3 +37,4 @@ yarn-error.log*
 next-env.d.ts
 .env
 dev.log
+npm_output.log

@@ -1,48 +1,133 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Chess } from 'chess.js';
 import { Chessboard } from 'react-chessboard';
+import { useWeb3 } from '@/lib/hooks/useWeb3';
+import { ethers } from 'ethers';
 
 const GamePage = ({ params }: { params: { id: string } }) => {
   const [game, setGame] = useState(new Chess());
   const [fen, setFen] = useState(game.fen());
+  const { contract, readOnlyContract } = useWeb3();
+  const [playerOneAddress, setPlayerOneAddress] = useState('');
+  const [playerTwoAddress, setPlayerTwoAddress] = useState('');
+  const [currentPlayer, setCurrentPlayer] = useState('');
+  const [error, setError] = useState('');
 
-  function onDrop({ sourceSquare, targetSquare }: { sourceSquare: string, targetSquare: string }) {
+  useEffect(() => {
+    if (readOnlyContract) {
+      const fetchGame = async () => {
+        try {
+          const gameId = parseInt(params.id, 10);
+          if (isNaN(gameId)) {
+            setError('Invalid game ID.');
+            return;
+          }
+
+          const gamesCount = await readOnlyContract.getGamesCount();
+          if (gameId >= gamesCount) {
+            setError('Game not found.');
+            return;
+          }
+
+          const gameData = await readOnlyContract.getGame(params.id);
+          const [player1, player2, currentTurn, moves] = gameData;
+          setPlayerOneAddress(player1);
+          setPlayerTwoAddress(player2);
+          setCurrentPlayer(currentTurn);
+
+          const newGame = new Chess();
+          moves.forEach((move: string) => {
+            newGame.move(move);
+          });
+          setGame(newGame);
+          setFen(newGame.fen());
+        } catch (e) {
+          console.error('Failed to fetch game:', e);
+          setError('Failed to load game data.');
+        }
+      };
+
+      fetchGame();
+    }
+  }, [readOnlyContract, params.id]);
+
+  async function onDrop({ sourceSquare, targetSquare }: { sourceSquare: string, targetSquare: string }) {
+    if (!contract) return false;
+
     const move = game.move({
       from: sourceSquare,
       to: targetSquare,
-      promotion: 'q', //
+      promotion: 'q',
     });
 
     if (move === null) return false;
-    setFen(game.fen());
+
+    try {
+      const tx = await contract.makeMove(params.id, move.san);
+      await tx.wait();
+      setFen(game.fen());
+    } catch (error) {
+      console.error("Failed to make move:", error);
+      // Revert the move on the local board if the transaction fails
+      const newGame = new Chess(fen);
+      setGame(newGame);
+      return false;
+    }
+
     return true;
   }
 
+  useEffect(() => {
+    if (contract) {
+      const onMoveMade = (gameId: ethers.BigNumber, player: string, move: string) => {
+        if (gameId.toString() === params.id) {
+          game.move(move);
+          setFen(game.fen());
+        }
+      };
+
+      contract.on('MoveMade', onMoveMade);
+
+      return () => {
+        contract.off('MoveMade', onMoveMade);
+      };
+    }
+  }, [contract, game, params.id]);
+
   const playerOne = {
     name: "Player One",
-    address: "0x1234...5678",
+    address: playerOneAddress,
     avatar: "https://lh3.googleusercontent.com/aida-public/AB6AXuBbDxrv3UFjPtpQvflG6PD4BOi36oZKSxoNLHqOc0X7NjY4lgOhswaUxp8YlOrAaR7uhD_ctGUITCEIcFh6SZpYMJHn5MJYIE1NOsUL8-kdJtQRO0k2YcPTAbAmS0NbbThM4Nyhxk_74zT0L9zkaEr33xtt5rBS8XkPlUFgEioSzsEjW8GSbWtibJUPHcWAZHz74ikP4vKOmp8PW_OCxdh7m4sK0oNVkARlBxikpTICm6lneGM1aR8t0i4wAHcWXOHl_7tgv6ebSZw",
     captured: "♙♙♘",
   };
 
   const playerTwo = {
     name: "Player Two",
-    address: "0xABCD...EFGH",
+    address: playerTwoAddress,
     avatar: "https://lh3.googleusercontent.com/aida-public/AB6AXuC4avTti8d-91vqtPFN8eWHN-AeYBktIXXMFCm-tFZU-S8VUgBgipqi0utNyGdMuDQ-20vk4fXg1OrNZYS0nAl40CBsarK4xg2-PIU13_N7SDY6X3tNA2Ibn1tuOg10jLxXCXQHSpXdN8MPjLAIyFQh06KvwkO3LzJuZbQlVGQuHpFDyycNgrQUv3UZXQXza2VDfCswO9q0MseBzKnRRVZd_l-I276glVMKTfH9_GTwac714C8iiLapgaQD-Wunn5LgtCLS4akfC5c",
     captured: "♙♖",
   };
 
-  const moveHistory = [
-    { move: 1, white: 'e4', black: 'e5' },
-    { move: 2, white: 'Nf3', black: 'Nc6' },
-    { move: 3, white: 'Bb5', black: 'a6' },
-    { move: 4, white: 'Ba4', black: 'Nf6' },
-    { move: 5, white: 'O-O', black: 'Be7' },
-    { move: 6, white: 'Re1', black: 'b5' },
-    { move: 7, white: 'Bb3', black: 'd6' },
-  ];
+  const moveHistory = game.history({ verbose: true }).map((move, index) => {
+    if (index % 2 === 0) {
+      return {
+        move: index / 2 + 1,
+        white: move.san,
+        black: game.history({ verbose: true })[index + 1]?.san || '',
+      };
+    }
+    return null;
+  }).filter(item => item !== null);
+
+  if (error) {
+    return (
+      <main className="flex flex-1 flex-col items-center justify-center p-4">
+        <h1 className="text-2xl font-bold text-red-500">{error}</h1>
+      </main>
+    );
+  }
 
   return (
     <main className="flex flex-1 flex-col lg:flex-row gap-8 p-4 sm:p-6 lg:p-8">
@@ -164,11 +249,13 @@ const GamePage = ({ params }: { params: { id: string } }) => {
           <h3 className="text-lg font-bold text-white">Move History</h3>
           <div className="bg-background-dark rounded-lg p-3 flex-1 overflow-y-auto">
             <ol className="grid grid-cols-3 gap-x-4 gap-y-1 text-sm text-gray-300">
-              {moveHistory.map((move) => (
-                <>
-                  <li className="flex gap-2"><span className="font-bold text-gray-500">{move.move}.</span> {move.white}</li>
-                  <li className="col-span-2">{move.black}</li>
-                </>
+              {moveHistory.map((move, index) => (
+                move && (
+                  <>
+                    <li key={`${index}-move`} className="flex gap-2"><span className="font-bold text-gray-500">{move.move}.</span> {move.white}</li>
+                    <li key={`${index}-black`} className="col-span-2">{move.black}</li>
+                  </>
+                )
               ))}
             </ol>
           </div>
