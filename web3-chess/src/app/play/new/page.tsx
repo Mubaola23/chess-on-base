@@ -25,7 +25,8 @@ const CreateGamePage = () => {
     setError('');
     try {
       const receipt = await createGame(opponentAddress);
-      if (receipt) {
+      if (receipt) {        console.log("receipt:",receipt);
+
         const iface = new ethers.Interface(contractABI);
         const parsedLogs = receipt.logs.map((log: any) => {
           try {
@@ -34,6 +35,7 @@ const CreateGamePage = () => {
             return null;
           }
         });
+        console.log("parsed logs:", parsedLogs);
         const gameCreatedLog = parsedLogs.find((log: any) => log?.name === 'GameCreated');
         if (gameCreatedLog) {
           const gameId = gameCreatedLog.args[0].toString();
